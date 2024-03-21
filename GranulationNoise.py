@@ -1,8 +1,21 @@
+'''
+This Python script calculates the convective blueshift and radial velocity
+dispersion of stars based on their stellar parameters such as temperature
+mass, radius, and surface gravity. The script also estimates errors in these
+calculations. The code is designed to be flexible for different stars,
+allowing users to input stellar parameters and obtain corresponding convective
+blueshift and radial velocity dispersion values. Finally, it showcases the
+application of these calculations for various stars, demonstrating their
+utility in astrophysical research.
+'''
+
 import numpy as np
+
 
 def convective_blueshift(T, g):
     """
-    Compute the convective blueshift of the star with respect to solar convective blueshift.
+    Compute the convective blueshift of the star with respect to solar
+    convective blueshift.
 
     Parameters
     ----------
@@ -14,7 +27,8 @@ def convective_blueshift(T, g):
     Returns
     -------
     Convective Blueshift : array_like
-        Convective Blueshift of the star with respect to solar convective blueshift.
+        Convective Blueshift of the star with respect to solar convective
+        blueshift.
     """
     Tsun = 5772
     gsun = 275.4
@@ -25,12 +39,14 @@ def convective_blueshift(T, g):
     star_i = (54.98 * np.log10(T)) - (4.80 * np.log10(g)) - 169.0
     sun_i = (54.98 * np.log10(Tsun)) - (4.80 * np.log10(gsun)) - 169.0
     irms = star_i / sun_i
-    conv_blue = (irms ** 2) * (v)
-    
+    conv_blue = (irms**2) * (v)
+
     return conv_blue
 
+
 def convective_blueshift_error(T, g, errT, errg):
-    ''' This function calculates the error in convective blueshift of the star with respect to solar convective blueshift'''
+    """This function calculates the error in convective blueshift of the star
+    with respect to solar convective blueshift"""
     Tsun = 5772
     gsun = 275.4
 
@@ -38,19 +54,28 @@ def convective_blueshift_error(T, g, errT, errg):
     sun_velo = (Tsun ** (32 / 9)) * (gsun ** (-2 / 9))
     star_i = (54.98 * np.log10(T)) - (4.80 * np.log10(g)) - 169.0
     sun_i = (54.98 * np.log10(Tsun)) - (4.80 * np.log10(gsun)) - 169.0
-    d = (sun_i ** 2) * (sun_velo)
-    conv_blue = ((star_i ** 2) * (star_velo)) / d
+    d = (sun_i**2) * (sun_velo)
+    conv_blue = ((star_i**2) * (star_velo)) / d
 
-    sigma_v = star_velo * (np.sqrt((((32 * errT) / (9 * T)) ** 2) + (((2 * errg) / (9 * g)) ** 2)))
-    sigma_i = np.sqrt(((54.98 * errT) / (np.log(10) * T)) ** 2 + ((4.80 * errg) / (np.log(10) * g)) ** 2)
-    sigma_cb = (conv_blue) * (np.sqrt((sigma_v / star_velo) ** 2 + ((2 * sigma_i) / (star_i)) ** 2))
+    sigma_v = star_velo * (
+        np.sqrt((((32 * errT) / (9 * T)) ** 2) + (((2 * errg) / (9 * g)) ** 2))
+    )
+    sigma_i = np.sqrt(
+        ((54.98 * errT) / (np.log(10) * T)) ** 2
+        + ((4.80 * errg) / (np.log(10) * g)) ** 2
+    )
+    sigma_cb = (conv_blue) * (
+        np.sqrt((sigma_v / star_velo) ** 2 + ((2 * sigma_i) / (star_i)) ** 2)
+    )
     err_CB_shift = sigma_cb
 
     return err_CB_shift
 
+
 def radial_velocity_dispersion(CB, T, M, R):
-    ''' This function calculates the dispersion in radial velocity due to granulation of the star with respect to solar value'''
-    ngsun = (1 / (5772 * 1) ** 2)
+    """This function calculates the dispersion in radial velocity due to
+    granulation of the star with respect to solar value"""
+    ngsun = 1 / (5772 * 1) ** 2
     sigmasun = (1) / (np.sqrt(ngsun))
     ng = (M / (T * R)) ** 2
     sigmarv = (CB) / (np.sqrt(ng))
@@ -58,16 +83,20 @@ def radial_velocity_dispersion(CB, T, M, R):
 
     return sigma_rv
 
+
 def radial_velocity_dispersion_error(CB, T, M, R, errCB, errT, errM, errR):
-    ''' This function calculates the error in dispersion in radial velocity due to granulation of the star with respect to solar value'''
-    ngsun = (1 / (5772 * 1) ** 2)
-    sigmasun = (1) / (np.sqrt(ngsun))
+    """This function calculates the error in dispersion in radial velocity due
+    to granulation of the star with respect to solar value"""
+    ngsun = 1 / (5772 * 1) ** 2
+    sigmasun = 1 / np.sqrt(ngsun)
     ng = (M / (T * R)) ** 2
-    sigmarv = (CB) / (np.sqrt(ng))
-    sigmarvsigma = sigmarv * (np.sqrt((errCB / CB) ** 2 + (errT / T) ** 2 + (errM / M) ** 2 + (errR / R) ** 2))
+    sigmarv = CB / np.sqrt(ng)
+    argsig = (errCB / CB) ** 2 + (errT / T) ** 2 + (errM / M) ** 2 + (errR / R) ** 2
+    sigmarvsigma = sigmarv * (np.sqrt(argsig))
     err_sigma_rv = sigmarvsigma / sigmasun
 
     return err_sigma_rv
+
 
 # Constants
 STAR_DATA = {
@@ -77,21 +106,27 @@ STAR_DATA = {
     # "Tau Ceti": {"M": 1.2, "R": 1.22, "Teff": 6220, "ge": 4.496}
 }
 
+
 def main():
     for star, data in STAR_DATA.items():
         M, R, Teff, ge = data["M"], data["R"], data["Teff"], data["ge"]
-        g = (10 ** ge) / 100
+        g = (10**ge) / 100
 
         CB = convective_blueshift(Teff, g)
         CB_error = convective_blueshift_error(Teff, g, 48, 0.001)
         rv_rms = radial_velocity_dispersion(CB, Teff, M, R)
-        rv_rms_error = radial_velocity_dispersion_error(CB, Teff, M, R, CB_error, 64, 0.02, 0.04)
+        rv_rms_error = radial_velocity_dispersion_error(
+            CB, Teff, M, R, CB_error, 64, 0.02, 0.04
+        )
 
         print(f"The value of the convective blueshift for {star} is: {CB * 350} m/s")
-        print(f"The error on the convective blueshift for {star} is: {CB_error * 350} m/s")
+        print(
+            f"The error on the convective blueshift for {star} is: {CB_error * 350} m/s"
+        )
         print(f"The value of the sigma RV for {star} is: {rv_rms * 0.40} m/s")
         print(f"The error on the sigma RV for {star} is: {rv_rms_error * 0.40} m/s")
         print()
+
 
 if __name__ == "__main__":
     main()
